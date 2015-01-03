@@ -80,7 +80,7 @@ public class BrewClockActivity extends Activity implements OnClickListener {
     brewCountDownTimer = new CountDownTimer(brewTime * 60 * 1000, 1000) {
       @Override
       public void onTick(long millisUntilFinished) {
-        brewTimeLabel.setText(String.valueOf(millisUntilFinished / 1000) + "s");
+        brewTimeLabel.setText(Utility.secondsToPrettyTime(millisUntilFinished / 1000));
       }
       
       @Override
