@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -22,11 +23,23 @@ public class BrewClockActivity extends Activity implements OnClickListener {
   protected int brewCount = 0;
   protected boolean isBrewing = false;
   protected MediaPlayer mp;
-  
-  /** Called when the activity is first created. */
+  private final String BREW_COUNT = "brew_count";
+
+    /** Called when the activity is first created. */
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    if (savedInstanceState == null)
+    {
+        Log.i("IN_CREATE","savedInstanceState is null");
+    }
+
+    if (savedInstanceState != null) {
+        brewCount = savedInstanceState.getInt(BREW_COUNT);
+        Log.i("IN_CREATE","restoring brewCount "+brewCount);
+    }
+
     setContentView(R.layout.main);
 
     // Connect interface elements to properties
@@ -40,11 +53,10 @@ public class BrewClockActivity extends Activity implements OnClickListener {
     brewAddTime.setOnClickListener(this);
     brewDecreaseTime.setOnClickListener(this);
     startBrew.setOnClickListener(this);
-    mp = MediaPlayer.create(this,R.raw.gong
-    );
+    mp = MediaPlayer.create(this,R.raw.gong);
     
     // Set the initial brew values
-    setBrewCount(0);
+    setBrewCount(brewCount);
     setBrewTime(3);
   }
   
@@ -91,7 +103,7 @@ public class BrewClockActivity extends Activity implements OnClickListener {
       public void onFinish() {
         isBrewing = false;
         setBrewCount(brewCount + 1);
-        
+
         brewTimeLabel.setText("Brew Up!");
         startBrew.setText("Start");
         mp.start();
@@ -130,4 +142,12 @@ public class BrewClockActivity extends Activity implements OnClickListener {
         startBrew();
     }
   }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt(BREW_COUNT,brewCount);
+
+        Log.i("IN_SAVE","saving state "+brewCount);
+        super.onSaveInstanceState(outState);
+    }
 }
