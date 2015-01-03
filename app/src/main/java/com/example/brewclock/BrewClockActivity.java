@@ -40,7 +40,8 @@ public class BrewClockActivity extends Activity implements OnClickListener {
     brewAddTime.setOnClickListener(this);
     brewDecreaseTime.setOnClickListener(this);
     startBrew.setOnClickListener(this);
-    mp = MediaPlayer.create(this,R.raw.bell);
+    mp = MediaPlayer.create(this,R.raw.gong
+    );
     
     // Set the initial brew values
     setBrewCount(0);
