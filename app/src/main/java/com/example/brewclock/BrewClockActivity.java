@@ -1,6 +1,7 @@
 package com.example.brewclock;
 
 import android.app.Activity;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.view.View;
@@ -20,6 +21,7 @@ public class BrewClockActivity extends Activity implements OnClickListener {
   protected CountDownTimer brewCountDownTimer;
   protected int brewCount = 0;
   protected boolean isBrewing = false;
+  protected MediaPlayer mp;
   
   /** Called when the activity is first created. */
   @Override
@@ -38,6 +40,7 @@ public class BrewClockActivity extends Activity implements OnClickListener {
     brewAddTime.setOnClickListener(this);
     brewDecreaseTime.setOnClickListener(this);
     startBrew.setOnClickListener(this);
+    mp = MediaPlayer.create(this,R.raw.bell);
     
     // Set the initial brew values
     setBrewCount(0);
@@ -90,6 +93,7 @@ public class BrewClockActivity extends Activity implements OnClickListener {
         
         brewTimeLabel.setText("Brew Up!");
         startBrew.setText("Start");
+        mp.start();
       }
     };
     
