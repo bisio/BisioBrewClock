@@ -21,11 +21,13 @@ public class BrewClockActivity extends Activity implements OnClickListener {
     protected TextView brewTimeLabel;
 
     protected int brewTime;
+    protected int leftBrewTimeInSec;
     protected CountDownTimer brewCountDownTimer;
     protected int brewCount;
     protected boolean isBrewing = false;
     protected MediaPlayer mp;
     private SharedPreferences state;
+    private final String LEFT_BREW_TIME = "left_brew_time";
 
     /** Called when the activity is first created. */
     @Override
@@ -70,6 +72,7 @@ public class BrewClockActivity extends Activity implements OnClickListener {
             return;
 
         brewTime = minutes;
+        leftBrewTimeInSec = brewTime * 60;
 
         if(brewTime < 1)
             brewTime = 1;
@@ -91,9 +94,10 @@ public class BrewClockActivity extends Activity implements OnClickListener {
      */
     public void startBrew() {
         // Create a new CountDownTimer to track the brew time
-        brewCountDownTimer = new CountDownTimer(brewTime * 60 * 1000, 1000) {
+        brewCountDownTimer = new CountDownTimer(leftBrewTimeInSec * 1000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
+                leftBrewTimeInSec = (int) millisUntilFinished / 1000;
                 brewTimeLabel.setText(Utility.secondsToPrettyTime(millisUntilFinished / 1000));
             }
 
@@ -143,11 +147,24 @@ public class BrewClockActivity extends Activity implements OnClickListener {
 
     @Override
     protected void onPause() {
-        Log.i("IN_PAUSE","writing down stuff for later");
+        Log.i("IN_PAUSE", "writing down stuff for later");
         SharedPreferences.Editor editor = state.edit();
         editor.putInt(getString(R.string.brew_count),brewCount);
         editor.putInt(getString(R.string.brew_time),brewTime);
         editor.commit();
         super.onPause();
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        leftBrewTimeInSec = savedInstanceState.getInt(LEFT_BREW_TIME);
+        startBrew();
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putInt(LEFT_BREW_TIME,leftBrewTimeInSec);
+        super.onSaveInstanceState(outState);
     }
 }
