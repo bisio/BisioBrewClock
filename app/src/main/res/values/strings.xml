@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="hello">Hello World, BrewClockActivity!</string>
-    <string name="app_name">BrewClock</string>
+    <string name="app_name">BisioBrewClock</string>
+    <string name="state_file">com.example.brewclock.STATE_FILE</string>
+    <string name="brew_count">brew_count</string>
+    <integer name="brew_count_default">0</integer>
+    <string name="brew_time">brew_time</string>
+    <integer name="brew_time_default">3</integer>
 </resources>

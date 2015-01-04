@@ -1,6 +1,8 @@
 package com.example.brewclock;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.CountDownTimer;
@@ -11,143 +13,141 @@ import android.widget.Button;
 import android.widget.TextView;
 
 public class BrewClockActivity extends Activity implements OnClickListener {
-  /** Properties **/
-  protected Button brewAddTime;
-  protected Button brewDecreaseTime;
-  protected Button startBrew;
-  protected TextView brewCountLabel;
-  protected TextView brewTimeLabel;
+    /** Properties **/
+    protected Button brewAddTime;
+    protected Button brewDecreaseTime;
+    protected Button startBrew;
+    protected TextView brewCountLabel;
+    protected TextView brewTimeLabel;
 
-  protected int brewTime = 3;
-  protected CountDownTimer brewCountDownTimer;
-  protected int brewCount = 0;
-  protected boolean isBrewing = false;
-  protected MediaPlayer mp;
-  private final String BREW_COUNT = "brew_count";
+    protected int brewTime;
+    protected CountDownTimer brewCountDownTimer;
+    protected int brewCount;
+    protected boolean isBrewing = false;
+    protected MediaPlayer mp;
+    private SharedPreferences state;
 
     /** Called when the activity is first created. */
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-    if (savedInstanceState == null)
-    {
-        Log.i("IN_CREATE","savedInstanceState is null");
+        state = getSharedPreferences(getString(R.string.state_file),
+                Context.MODE_PRIVATE);
+
+        brewCount = state.getInt(getString(R.string.brew_count),0);
+        brewTime  = state.getInt(getString(R.string.brew_time),3);
+
+        setContentView(R.layout.main);
+
+        // Connect interface elements to properties
+        brewAddTime = (Button) findViewById(R.id.brew_time_up);
+        brewDecreaseTime = (Button) findViewById(R.id.brew_time_down);
+        startBrew = (Button) findViewById(R.id.brew_start);
+        brewCountLabel = (TextView) findViewById(R.id.brew_count_label);
+        brewTimeLabel = (TextView) findViewById(R.id.brew_time);
+
+        // Setup ClickListeners
+        brewAddTime.setOnClickListener(this);
+        brewDecreaseTime.setOnClickListener(this);
+        startBrew.setOnClickListener(this);
+        mp = MediaPlayer.create(this,R.raw.gong);
+
+        // Set the initial brew values
+        setBrewCount(brewCount);
+        setBrewTime(brewTime);
     }
 
-    if (savedInstanceState != null) {
-        brewCount = savedInstanceState.getInt(BREW_COUNT);
-        Log.i("IN_CREATE","restoring brewCount "+brewCount);
+    /** Methods **/
+
+    /**
+     * Set an absolute value for the number of minutes to brew. Has no effect if a brew
+     * is currently running.
+     * @param minutes The number of minutes to brew.
+     */
+    public void setBrewTime(int minutes) {
+        if(isBrewing)
+            return;
+
+        brewTime = minutes;
+
+        if(brewTime < 1)
+            brewTime = 1;
+
+        brewTimeLabel.setText(String.valueOf(brewTime) + "m");
     }
 
-    setContentView(R.layout.main);
+    /**
+     * Set the number of brews that have been made, and update the interface.
+     * @param count The new number of brews
+     */
+    public void setBrewCount(int count) {
+        brewCount = count;
+        brewCountLabel.setText(String.valueOf(brewCount));
+    }
 
-    // Connect interface elements to properties
-    brewAddTime = (Button) findViewById(R.id.brew_time_up);
-    brewDecreaseTime = (Button) findViewById(R.id.brew_time_down);
-    startBrew = (Button) findViewById(R.id.brew_start);
-    brewCountLabel = (TextView) findViewById(R.id.brew_count_label);
-    brewTimeLabel = (TextView) findViewById(R.id.brew_time);
-    
-    // Setup ClickListeners
-    brewAddTime.setOnClickListener(this);
-    brewDecreaseTime.setOnClickListener(this);
-    startBrew.setOnClickListener(this);
-    mp = MediaPlayer.create(this,R.raw.gong);
-    
-    // Set the initial brew values
-    setBrewCount(brewCount);
-    setBrewTime(3);
-  }
-  
-  /** Methods **/
-  
-  /**
-   * Set an absolute value for the number of minutes to brew. Has no effect if a brew
-   * is currently running.
-   * @param minutes The number of minutes to brew.
-   */
-  public void setBrewTime(int minutes) {
-    if(isBrewing)
-      return;
-    
-    brewTime = minutes;
-    
-    if(brewTime < 1)
-      brewTime = 1;
+    /**
+     * Start the brew timer
+     */
+    public void startBrew() {
+        // Create a new CountDownTimer to track the brew time
+        brewCountDownTimer = new CountDownTimer(brewTime * 60 * 1000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                brewTimeLabel.setText(Utility.secondsToPrettyTime(millisUntilFinished / 1000));
+            }
 
-    brewTimeLabel.setText(String.valueOf(brewTime) + "m");
-  }
-  
-  /**
-   * Set the number of brews that have been made, and update the interface. 
-   * @param count The new number of brews
-   */
-  public void setBrewCount(int count) {
-    brewCount = count;
-    brewCountLabel.setText(String.valueOf(brewCount));
-  }
-  
-  /**
-   * Start the brew timer
-   */
-  public void startBrew() {
-    // Create a new CountDownTimer to track the brew time
-    brewCountDownTimer = new CountDownTimer(brewTime * 60 * 1000, 1000) {
-      @Override
-      public void onTick(long millisUntilFinished) {
-        brewTimeLabel.setText(Utility.secondsToPrettyTime(millisUntilFinished / 1000));
-      }
-      
-      @Override
-      public void onFinish() {
+            @Override
+            public void onFinish() {
+                isBrewing = false;
+                setBrewCount(brewCount + 1);
+
+                brewTimeLabel.setText("Brew Up!");
+                startBrew.setText("Start");
+                mp.start();
+            }
+        };
+
+        brewCountDownTimer.start();
+        startBrew.setText("Stop");
+        isBrewing = true;
+    }
+
+    /**
+     * Stop the brew timer
+     */
+    public void stopBrew() {
+        if(brewCountDownTimer != null)
+            brewCountDownTimer.cancel();
+
         isBrewing = false;
-        setBrewCount(brewCount + 1);
-
-        brewTimeLabel.setText("Brew Up!");
         startBrew.setText("Start");
-        mp.start();
-      }
-    };
-    
-    brewCountDownTimer.start();
-    startBrew.setText("Stop");
-    isBrewing = true;
-  }
-  
-  /**
-   * Stop the brew timer
-   */
-  public void stopBrew() {
-    if(brewCountDownTimer != null)
-      brewCountDownTimer.cancel();
-    
-    isBrewing = false;
-    startBrew.setText("Start");
-  }
-  
-  /** Interface Implementations **/
+    }
+
+    /** Interface Implementations **/
   /* (non-Javadoc)
    * @see android.view.View.OnClickListener#onClick(android.view.View)
    */
-  public void onClick(View v) {
-    if(v == brewAddTime)
-      setBrewTime(brewTime + 1);
-    else if(v == brewDecreaseTime)
-      setBrewTime(brewTime -1);
-    else if(v == startBrew) {
-      if(isBrewing)
-        stopBrew();
-      else
-        startBrew();
+    public void onClick(View v) {
+        if(v == brewAddTime)
+            setBrewTime(brewTime + 1);
+        else if(v == brewDecreaseTime)
+            setBrewTime(brewTime -1);
+        else if(v == startBrew) {
+            if(isBrewing)
+                stopBrew();
+            else
+                startBrew();
+        }
     }
-  }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putInt(BREW_COUNT,brewCount);
-
-        Log.i("IN_SAVE","saving state "+brewCount);
-        super.onSaveInstanceState(outState);
+    protected void onPause() {
+        Log.i("IN_PAUSE","writing down stuff for later");
+        SharedPreferences.Editor editor = state.edit();
+        editor.putInt(getString(R.string.brew_count),brewCount);
+        editor.putInt(getString(R.string.brew_time),brewTime);
+        editor.commit();
+        super.onPause();
     }
 }
