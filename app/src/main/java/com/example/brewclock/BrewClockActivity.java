@@ -70,13 +70,8 @@ public class BrewClockActivity extends Activity implements OnClickListener {
     public void setBrewTime(int minutes) {
         if(isBrewing)
             return;
-
-        brewTime = minutes;
+        brewTime =  minutes < 1? 1: minutes;
         leftBrewTimeInSec = brewTime * 60;
-
-        if(brewTime < 1)
-            brewTime = 1;
-
         brewTimeLabel.setText(String.valueOf(brewTime) + "m");
     }
 
